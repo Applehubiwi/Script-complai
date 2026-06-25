@@ -1,0 +1,86 @@
+-- DORA HUB - BẢN VIP TP TRÊN ĐẦU
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+
+-- UI Setup (Title: Dora)
+local FloatingBtn = Instance.new("TextButton", ScreenGui); FloatingBtn.Size = UDim2.new(0, 70, 0, 50); FloatingBtn.Position = UDim2.new(0.1, 0, 0.1, 0); FloatingBtn.Text = "Dora"; FloatingBtn.BackgroundColor3 = Color3.fromRGB(255, 100, 150); FloatingBtn.Draggable = true
+local MainFrame = Instance.new("Frame", ScreenGui); MainFrame.Size = UDim2.new(0, 240, 0, 210); MainFrame.Position = UDim2.new(0.5, -120, 0.5, -100); MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20); MainFrame.Visible = false; MainFrame.Draggable = true
+local Title = Instance.new("TextLabel", MainFrame); Title.Size = UDim2.new(1, 0, 0, 30); Title.Text = "Dora Hub v1.0"; Title.TextColor3 = Color3.fromRGB(255, 255, 255); Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+FloatingBtn.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end)
+
+local targetPlayer = nil
+local selectedChar = nil
+local tpActive = false
+local autoGenActive = false -- Thêm biến Auto Gen
+
+-- Dropdown
+local function createRightDropdown(name, list, yPos, callback, isPlayerList)
+    local btn = Instance.new("TextButton", MainFrame); btn.Size = UDim2.new(0.45, 0, 0, 35); btn.Position = UDim2.new(0.5, 0, yPos, 0); btn.Text = name
+    local scroll = Instance.new("ScrollingFrame", MainFrame); scroll.Size = UDim2.new(0.5, 0, 0, 110); scroll.Position = UDim2.new(1.05, 0, 0.1, 0); scroll.Visible = false; scroll.BackgroundColor3 = Color3.fromRGB(45, 45, 45); Instance.new("UIListLayout", scroll)
+    btn.MouseButton1Click:Connect(function()
+        scroll.Visible = not scroll.Visible
+        if scroll.Visible then
+            scroll:ClearAllChildren(); Instance.new("UIListLayout", scroll)
+            local items = isPlayerList and {} or list
+            if isPlayerList then for _,p in pairs(Players:GetPlayers()) do if p ~= LocalPlayer then table.insert(items, p.Name) end end end
+            for _, item in pairs(items) do
+                local b = Instance.new("TextButton", scroll); b.Size = UDim2.new(1,0,0,30); b.Text = item; b.MouseButton1Click:Connect(function() callback(item); btn.Text = item; scroll.Visible = false end)
+            end
+        end
+    end)
+end
+
+createRightDropdown("select Player", {}, 0.25, function(item) targetPlayer = Players:FindFirstChild(item) end, true)
+createRightDropdown("select Char", {"Noob", "Chance", "Veeronica", "Shedletsky", "two time", "duseka", "eliot", "007n7", "JaneDoe"}, 0.65, function(item) selectedChar = item end, false)
+
+-- Toggle TP
+local ToggleTp = Instance.new("TextButton", MainFrame); ToggleTp.Size = UDim2.new(0.4, 0, 0, 40); ToggleTp.Position = UDim2.new(0.05, 0, 0.25, 0); ToggleTp.Text = "TP: OFF"
+ToggleTp.MouseButton1Click:Connect(function() tpActive = not tpActive; ToggleTp.Text = tpActive and "TP: ON" or "TP: OFF" end)
+
+-- Toggle Auto Gen (MỚI)
+local ToggleGen = Instance.new("TextButton", MainFrame); ToggleGen.Size = UDim2.new(0.4, 0, 0, 40); ToggleGen.Position = UDim2.new(0.05, 0, 0.5, 0); ToggleGen.Text = "Gen: OFF"
+ToggleGen.MouseButton1Click:Connect(function() 
+    autoGenActive = not autoGenActive
+    ToggleGen.Text = autoGenActive and "Gen: ON" or "Gen: OFF"
+end)
+
+-- Logic TP "Dora Style" + Auto Gen
+RunService.Heartbeat:Connect(function()
+    -- Logic TP cũ của Gà
+    if tpActive and targetPlayer and targetPlayer.Character and selectedChar then
+        pcall(function()
+            local isK = workspace:FindFirstChild("Killers") and workspace.Killers:FindFirstChild(targetPlayer.Name)
+            local myRoot = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local targetRoot = targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+            
+            if myRoot and targetRoot then
+                if (selectedChar == "Noob" or selectedChar == "Veeronica" or selectedChar == "007n7") then
+                    myRoot.CFrame = targetRoot.CFrame * CFrame.new(33333, 36666, 9) -- Giữ nguyên logic TP trên đầu của Gà
+                elseif (selectedChar == "eliot" or selectedChar == "JaneDoe" or selectedChar == "two time" or selectedChar == "Shedletsky" or selectedChar == "duseka") and isK then
+                    myRoot.CFrame = targetRoot.CFrame
+                else
+                    myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1)
+                end
+            end
+        end)
+    end
+
+    -- Logic Auto Gen
+    if autoGenActive then
+        pcall(function()
+            -- Gà thay đường dẫn 'workspace.Generators' thành tên Folder chứa máy phát điện trong game đó nhé
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj.Name == "Generator" and obj:FindFirstChild("Interaction") then
+                    -- Thay fire server bằng Remote đúng của game
+                    game:GetService("ReplicatedStorage").RemoteEvent:FireServer("Interact", obj)
+                end
+            end
+        end)
+    end
+end)
+
+------Forsaken plus --------
+
+loadstring(game:HttpGet("https://rawscripts.net/raw/Forsaken-Plus-216770"))()
